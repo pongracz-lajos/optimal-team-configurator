@@ -4,74 +4,63 @@ namespace GeneticAlgorithm
 {
     class Population
     {
+        #region "Private members."
+
         /**
-         * The list of drawings.
+         * The concrete population.
          */
-        CandidateSolution[] candidateSolutions;
+        private CandidateSolution[] candidateSolutions;
+
+        #endregion
+
+        #region "Public properties"
+
+        public CandidateSolution[] CandidateSolutions
+        {
+            get
+            {
+                return candidateSolutions;
+            }
+        }
+
+        #endregion
 
         /**
          * Constructs a new population.
-         * @param populationSize The size of the population.
+         * @param size The size of the population.
          * @param initialise True, if the population will be initialised.
          */
-        public Population(int populationSize, bool initialise)
+        public Population(int size, bool initialise = false)
         {
-            candidateSolutions = new CandidateSolution[populationSize];
+            candidateSolutions = new CandidateSolution[size];
 
             if (initialise)
             {
-                for (int i = 0; i < this.populationSize(); i++)
+                for (int i = 0; i < candidateSolutions.Length; i++)
                 {
-                    CandidateSolution drawing = new CandidateSolution(5);
-                    drawing.GenerateIndividual();
-                    saveCandidateSolution(i, drawing);
+                    CandidateSolution candidateSolution = new CandidateSolution(5);
+                    candidateSolution.GenerateIndividual();
+                    candidateSolutions[i] = candidateSolution;
                 }
             }
         }
 
         /**
-         * Saves the candidate solution at the given index.
-         * @param index Index.
-         * @param candidateSolutions CandidateSolution.
-         */
-        public void saveCandidateSolution(int index, CandidateSolution candidateSolution)
-        {
-            candidateSolutions[index] = candidateSolution;
-        }
-
-        /**
-         * @param index Index.
-         * @return The drawing at the index.
-         */
-        public CandidateSolution getDrawing(int index)
-        {
-            return candidateSolutions[index];
-        }
-
-        /**
-         * @return The drawing with the highest fitness.
+         * @return The solution with the highest fitness.
          */
         public CandidateSolution getFittest()
         {
             CandidateSolution fittest = candidateSolutions[0];
 
-            for (int i = 1; i < populationSize(); i++)
+            for (int i = 1; i < candidateSolutions.Length; i++)
             {
-                if (fittest.Fitness <= getDrawing(i).Fitness)
+                if (fittest.Fitness <= candidateSolutions[i].Fitness)
                 {
-                    fittest = getDrawing(i);
+                    fittest = candidateSolutions[i];
                 }
             }
 
             return fittest;
-        }
-
-        /**
-         * @return The size of the population.
-         */
-        public int populationSize()
-        {
-            return candidateSolutions.Length;
         }
     }
 }

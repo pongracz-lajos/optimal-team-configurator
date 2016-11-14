@@ -1,4 +1,5 @@
-﻿using GeneticAlgorithm.Model;
+﻿using Common;
+using GeneticAlgorithm.Model;
 using System;
 
 namespace GeneticAlgorithm
@@ -10,63 +11,64 @@ namespace GeneticAlgorithm
      */
     class GeneticAlgorithm
     {
-        #region "Private fields"
+        #region "Public properties"
 
         /**
          * Mutation rate.
          */
-        private double mutationRate = 0.015;
-
-        /**
-         * The mini population size for selection.
-         */
-        private int miniPopSize = 5;
+        public double MutationRate
+        {
+            get; set;
+        }
 
         /**
          * Elitism on/off.
          */
-        private bool elitism = true;
+        public bool Elitism
+        {
+            get; set;
+        }
 
         #endregion
 
-        public GeneticAlgorithm()
+        public GeneticAlgorithm(SolverConfiguration<GeneticAlgorithmConfiguration> configuration)
         {
-
+            Elitism = configuration.Configuration.Elitism;
+            MutationRate = configuration.Configuration.MutationRate;
         }
 
-        
-
-	/**
-	 * Evolve the population.
-	 * @param pop The population.
-	 * @return The evolved population.
-	 */
-	public static Population evolvePopulation(Population population)
+        /**
+         * Evolve the population.
+         * @param pop The population.
+         * @return The evolved population.
+         */
+        public Population EvolvePopulation(Population population)
         {
-            Population newPopulation = new Population(population.populationSize(), false);
+            Population newPopulation = new Population(population.CandidateSolutions.Length, false);
 
             // Elitism.
             int elitismOffset = 0;
-            if (elitism)
+            if (Elitism)
             {
-                newPopulation.saveDrawing(0, population.getFittest());
+                newPopulation.CandidateSolutions[0] = population.getFittest();
                 elitismOffset = 1;
             }
 
             // Crossover operation.
-            for (int i = elitismOffset; i < newPopulation.populationSize(); i++)
+            for (int i = elitismOffset; i < newPopulation.CandidateSolutions.Length; i++)
             {
                 CandidateSolution parent1 = selection(population);
                 CandidateSolution parent2 = selection(population);
 
                 CandidateSolution child = crossover(parent1, parent2);
-                newPopulation.saveDrawing(i, child);
+
+                newPopulation.CandidateSolutions[i] = child;
             }
 
             // Mutation.
-            for (int i = elitismOffset; i < newPopulation.populationSize(); i++)
+            for (int i = elitismOffset; i < newPopulation.CandidateSolutions.Length; i++)
             {
-                mutate(newPopulation.getDrawing(i));
+                mutate(newPopulation.CandidateSolutions[i]);
             }
 
             return newPopulation;
@@ -109,17 +111,17 @@ namespace GeneticAlgorithm
         }
 
         /**
-         * Mutation of a drawing.
+         * Mutation of a candidate solution.
          * @param drawing The drawing.
          */
-        private static void mutate(CandidateSolution drawing)
+        private void mutate(CandidateSolution candidateSolution)
         {
             float x, y;
             Random random = new Random();
 
             for (int i = 0; i < drawing.drawingSize(); i++)
             {
-                if (random.nextDouble() < mutationRate)
+                if (random.nextDouble() < MutationRate)
                 {
                     x = random.nextFloat() * 10.0f;
                     y = random.nextFloat() * 10.0f;
@@ -135,12 +137,12 @@ namespace GeneticAlgorithm
          * @param population The population.
          * @return A drawing from the population.
          */
-        private static CandidateSolution selection(Population population)
+        private CandidateSolution selection(Population population)
         {
             Random random = new Random();
             int randomDrawing;
 
-            Population miniPop = new Population(miniPopSize, false);
+            Population miniPop = new Population(miniPopSize);
 
             for (int i = 0; i < miniPopSize; i++)
             {
