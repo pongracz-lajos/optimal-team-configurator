@@ -9,6 +9,8 @@ namespace GeneticAlgorithm.Model
      */
     public class CandidateSolution
     {
+        #region "Private fields"
+
         /**
          * The chromosomes (genotype), an array of numbers, where the index is the ID of a person
          * and the value is the ID of the team to which it belongs.
@@ -20,37 +22,18 @@ namespace GeneticAlgorithm.Model
          */
         private double fitness;
 
-        /**
-         * Constructs a new empty candidate solution.
-         */
-        public CandidateSolution(int length)
-        {
-            solution = new int[length];
-            fitness = 0d;
-        }
+        private int bitSize;
 
-        /**
-         * Constructs a copy of a candidate solution from a genotype.
-         * @param solution The genotype.
-         */
-        public CandidateSolution(int[] solution)
-        {
-            this.solution = new int[solution.Length];
+        #endregion
 
-            for (int i = 0; i < solution.Length; i++)
+        #region "Public properties"
+
+        public int[] Solution
+        {
+            get
             {
-                this.solution[i] = solution[i];
+                return solution;
             }
-
-            fitness = 0d;
-        }
-
-        /**
-         * Generates a new individual.
-         */
-        public void GenerateIndividual()
-        {
-            Random random = new Random();
         }
 
         public double Fitness
@@ -63,6 +46,31 @@ namespace GeneticAlgorithm.Model
                 }
 
                 return fitness;
+            }
+        }
+
+        #endregion
+
+        /**
+         * Constructs a new empty candidate solution.
+         */
+        public CandidateSolution(int bitSize, int length)
+        {
+            solution = new int[length];
+            fitness = 0d;
+            this.bitSize = bitSize;
+        }
+
+        /**
+         * Generates a new individual.
+         */
+        public void GenerateIndividual()
+        {
+            Random random = new Random();
+
+            for (int i = 0; i < solution.Length; i++)
+            {
+                solution[i] = random.Next(bitSize) + 1;
             }
         }
     }

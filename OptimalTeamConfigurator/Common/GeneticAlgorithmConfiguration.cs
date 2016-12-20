@@ -1,4 +1,6 @@
-﻿namespace Common
+﻿using YAXLib;
+
+namespace Common
 {
     public class GeneticAlgorithmConfiguration
     {
@@ -8,6 +10,28 @@
         }
 
         public double MutationRate
+        {
+            get; set;
+        }
+
+        public int PopulationSize
+        {
+            get; set;
+        }
+
+        public string File
+        {
+            get; set;
+        }
+
+        [YAXDontSerialize]
+        public int PeopleNumber
+        {
+            get; set;
+        }
+
+        [YAXDontSerialize]
+        public int GroupSize
         {
             get; set;
         }

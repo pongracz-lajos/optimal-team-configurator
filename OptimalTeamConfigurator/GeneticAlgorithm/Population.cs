@@ -30,7 +30,7 @@ namespace GeneticAlgorithm
          * @param size The size of the population.
          * @param initialise True, if the population will be initialised.
          */
-        public Population(int size, bool initialise = false)
+        public Population(int size, int bitSize, int genotypeLength, bool initialise = false)
         {
             candidateSolutions = new CandidateSolution[size];
 
@@ -38,7 +38,7 @@ namespace GeneticAlgorithm
             {
                 for (int i = 0; i < candidateSolutions.Length; i++)
                 {
-                    CandidateSolution candidateSolution = new CandidateSolution(5);
+                    CandidateSolution candidateSolution = new CandidateSolution(bitSize, genotypeLength);
                     candidateSolution.GenerateIndividual();
                     candidateSolutions[i] = candidateSolution;
                 }
@@ -54,7 +54,7 @@ namespace GeneticAlgorithm
 
             for (int i = 1; i < candidateSolutions.Length; i++)
             {
-                if (fittest.Fitness <= candidateSolutions[i].Fitness)
+                if (fittest.Fitness < candidateSolutions[i].Fitness)
                 {
                     fittest = candidateSolutions[i];
                 }

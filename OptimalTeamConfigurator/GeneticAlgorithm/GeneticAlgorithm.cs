@@ -9,7 +9,7 @@ namespace GeneticAlgorithm
      * 
      * @author Lajos L. Pongracz
      */
-    class GeneticAlgorithm
+    public class GeneticAlgorithm
     {
         #region "Public properties"
 
@@ -29,12 +29,45 @@ namespace GeneticAlgorithm
             get; set;
         }
 
+        public int MiniPopulationSize
+        {
+            get; set;
+        }
+
+        public int PopulationSize
+        {
+            get; set;
+        }
+
+        public int GenotypeLength
+        {
+            get; set;
+        }
+
+        public int BitSize
+        {
+            get; set;
+        }
+
         #endregion
 
-        public GeneticAlgorithm(SolverConfiguration<GeneticAlgorithmConfiguration> configuration)
+        public GeneticAlgorithm(GeneticAlgorithmConfiguration configuration)
         {
-            Elitism = configuration.Configuration.Elitism;
-            MutationRate = configuration.Configuration.MutationRate;
+            Elitism = configuration.Elitism;
+            MutationRate = configuration.MutationRate;
+            PopulationSize = configuration.PopulationSize;
+            GenotypeLength = configuration.PeopleNumber;
+
+            if (configuration.PeopleNumber % configuration.GroupSize == 0)
+            {
+                BitSize = configuration.PeopleNumber / configuration.GroupSize;
+            }
+            else
+            {
+                BitSize = configuration.PeopleNumber / configuration.GroupSize + 1;
+            }
+
+            MiniPopulationSize = 5;
         }
 
         /**
@@ -42,20 +75,20 @@ namespace GeneticAlgorithm
          * @param pop The population.
          * @return The evolved population.
          */
-        public Population EvolvePopulation(Population population)
+        private Population EvolvePopulation(Population population)
         {
-            Population newPopulation = new Population(population.CandidateSolutions.Length, false);
+            Population newPopulation = new Population(PopulationSize, BitSize, GenotypeLength);
 
             // Elitism.
-            int elitismOffset = 0;
+            int offset = 0;
             if (Elitism)
             {
                 newPopulation.CandidateSolutions[0] = population.getFittest();
-                elitismOffset = 1;
+                offset = 1;
             }
 
             // Crossover operation.
-            for (int i = elitismOffset; i < newPopulation.CandidateSolutions.Length; i++)
+            for (int i = offset; i < newPopulation.CandidateSolutions.Length; i++)
             {
                 CandidateSolution parent1 = selection(population);
                 CandidateSolution parent2 = selection(population);
@@ -66,7 +99,7 @@ namespace GeneticAlgorithm
             }
 
             // Mutation.
-            for (int i = elitismOffset; i < newPopulation.CandidateSolutions.Length; i++)
+            for (int i = offset; i < newPopulation.CandidateSolutions.Length; i++)
             {
                 mutate(newPopulation.CandidateSolutions[i]);
             }
@@ -80,30 +113,30 @@ namespace GeneticAlgorithm
          * @param parent2 The second parent.
          * @return The child drawing.
          */
-        private static CandidateSolution crossover(CandidateSolution parent1, CandidateSolution parent2)
+        private CandidateSolution crossover(CandidateSolution parent1, CandidateSolution parent2)
         {
             Random random = new Random();
-            int startPos = random.nextInt(parent1.drawingSize());
-            int endPos = random.nextInt(parent1.drawingSize());
+            int startPosition = random.Next(GenotypeLength);
+            int endPosition = random.Next(GenotypeLength);
 
-            if (startPos > endPos)
+            if (startPosition > endPosition)
             {
-                int tmp = startPos;
-                startPos = endPos;
-                endPos = tmp;
+                int tmp = startPosition;
+                startPosition = endPosition;
+                endPosition = tmp;
             }
 
-            CandidateSolution child = new CandidateSolution();
+            CandidateSolution child = new CandidateSolution(BitSize, GenotypeLength);
 
-            for (int i = 0; i < parent1.drawingSize(); i++)
+            for (int i = 0; i < GenotypeLength; i++)
             {
-                if (startPos <= i && i <= endPos)
+                if (startPosition <= i && i <= endPosition)
                 {
-                    child.getDrawing().add(new Node(parent2.getNode(i)));
+                    child.Solution[i] = parent2.Solution[i];
                 }
                 else
                 {
-                    child.getDrawing().add(new Node(parent1.getNode(i)));
+                    child.Solution[i] = parent1.Solution[i];
                 }
             }
 
@@ -112,22 +145,17 @@ namespace GeneticAlgorithm
 
         /**
          * Mutation of a candidate solution.
-         * @param drawing The drawing.
+         * @param candidateSolution The candidate solution.
          */
         private void mutate(CandidateSolution candidateSolution)
         {
-            float x, y;
             Random random = new Random();
 
-            for (int i = 0; i < drawing.drawingSize(); i++)
+            for (int i = 0; i < candidateSolution.Solution.Length; i++)
             {
-                if (random.nextDouble() < MutationRate)
+                if (random.NextDouble() < MutationRate)
                 {
-                    x = random.nextFloat() * 10.0f;
-                    y = random.nextFloat() * 10.0f;
-
-                    drawing.getNode(i).setX(x);
-                    drawing.getNode(i).setY(y);
+                    candidateSolution.Solution[i] = random.Next(BitSize) + 1;
                 }
             }
         }
@@ -140,18 +168,23 @@ namespace GeneticAlgorithm
         private CandidateSolution selection(Population population)
         {
             Random random = new Random();
-            int randomDrawing;
+            int randomCandidate;
 
-            Population miniPop = new Population(miniPopSize);
+            Population miniPop = new Population(MiniPopulationSize, BitSize, GenotypeLength);
 
-            for (int i = 0; i < miniPopSize; i++)
+            for (int i = 0; i < MiniPopulationSize; i++)
             {
-                randomDrawing = random.nextInt(population.populationSize());
-                miniPop.saveDrawing(i, population.getDrawing(randomDrawing));
+                randomCandidate = random.Next(population.CandidateSolutions.Length);
+                miniPop.CandidateSolutions[i] = population.CandidateSolutions[randomCandidate];
             }
 
             CandidateSolution fittest = miniPop.getFittest();
             return fittest;
+        }
+
+        public void Solve()
+        {
+            throw new NotImplementedException();
         }
     }
 }
