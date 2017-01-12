@@ -12,6 +12,10 @@ namespace Desktop
 {
     public partial class Main : Form
     {
+        private List<List<int>> groups;
+
+        private ISolver solver;
+
         public Main()
         {
             InitializeComponent();
@@ -32,12 +36,20 @@ namespace Desktop
 
         private void startToolStripButton_Click(object sender, EventArgs e)
         {
+            startToolStripButton.Enabled = false;
 
+            groups = new List<List<int>>();
+            worker.RunWorkerAsync(groups);
         }
 
         private void worker_DoWork(object sender, DoWorkEventArgs e)
         {
+            BackgroundWorker worker = sender as BackgroundWorker;
 
+            while (solver.IsRunning)
+            {
+                worker.ReportProgress(1, obj);
+            }
         }
 
         private void worker_ProgressChanged(object sender, ProgressChangedEventArgs e)
@@ -47,7 +59,7 @@ namespace Desktop
 
         private void worker_RunWorkerCompleted(object sender, RunWorkerCompletedEventArgs e)
         {
-
+            startToolStripButton.Enabled = true;
         }
 
         private void panel_Paint(object sender, PaintEventArgs e)
