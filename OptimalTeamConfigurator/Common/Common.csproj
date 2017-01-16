@@ -46,6 +46,8 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="GeneticAlgorithmConfiguration.cs" />
+    <Compile Include="ISolver.cs" />
+    <Compile Include="ProblemResult.cs" />
     <Compile Include="SolverConfiguration.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>

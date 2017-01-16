@@ -1,18 +1,16 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel;
-using System.Data;
 using System.Drawing;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows.Forms;
+using TeamConfigurator.Interfaces;
 
 namespace Desktop
 {
     public partial class Main : Form
     {
-        private List<List<int>> groups;
+        private ProblemResult result;
 
         private ISolver solver;
 
@@ -38,27 +36,32 @@ namespace Desktop
         {
             startToolStripButton.Enabled = false;
 
-            groups = new List<List<int>>();
-            worker.RunWorkerAsync(groups);
+            worker.RunWorkerAsync(new ProblemResult() { Groups = new Dictionary<int, List<int>>() });
         }
 
         private void worker_DoWork(object sender, DoWorkEventArgs e)
         {
             BackgroundWorker worker = sender as BackgroundWorker;
+            ProblemResult result = e.Argument as ProblemResult;
 
-            while (solver.IsRunning)
-            {
-                worker.ReportProgress(1, obj);
-            }
+            solver.Start(worker, result);
         }
 
         private void worker_ProgressChanged(object sender, ProgressChangedEventArgs e)
         {
-
+            // Get result and redraw the solution.
+            result = e.UserState as ProblemResult;
+            Refresh();
         }
 
         private void worker_RunWorkerCompleted(object sender, RunWorkerCompletedEventArgs e)
         {
+            // Get result and redraw the solution.
+            result = e.UserState as ProblemResult;
+            Refresh();
+
+            // Write statistics and results.
+
             startToolStripButton.Enabled = true;
         }
 
@@ -67,7 +70,18 @@ namespace Desktop
             var panel = sender as Panel;
             var g = e.Graphics;
 
+            var rows = GCD(Size.Width, result.Groups.Keys.Count);
+            var columns = 
+
             g.FillRectangle(new SolidBrush(Color.White), panel.DisplayRectangle);
+
+            foreach (var group in result.Groups.Keys)
+            {
+                var brush = new SolidBrush(Color.FromArgb(group));
+
+            }
+            
+            g.FillEllipse
 
             /*Point[] points = new Point[4];
 
@@ -80,6 +94,11 @@ namespace Desktop
 
             g.FillPolygon(brush, points);*/
 
+        }
+
+        private static int GCD(int a, int b)
+        {
+            return b == 0 ? a : GCD(b, a % b);
         }
     }
 }

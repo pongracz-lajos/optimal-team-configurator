@@ -1,6 +1,10 @@
 ﻿using Common;
 using GeneticAlgorithm.Model;
 using System;
+using TeamConfigurator.Interfaces;
+using System.ComponentModel;
+using System.Collections.Generic;
+using System.Linq;
 
 namespace GeneticAlgorithm
 {
@@ -9,7 +13,7 @@ namespace GeneticAlgorithm
      * 
      * @author Lajos L. Pongracz
      */
-    public class GeneticAlgorithm
+    public class GeneticAlgorithm : ISolver
     {
         #region "Public properties"
 
@@ -45,6 +49,16 @@ namespace GeneticAlgorithm
         }
 
         public int BitSize
+        {
+            get; set;
+        }
+
+        public int MaxStep
+        {
+            get; set;
+        }
+
+        public double Epsilon
         {
             get; set;
         }
@@ -182,9 +196,39 @@ namespace GeneticAlgorithm
             return fittest;
         }
 
-        public void Solve()
+        /**
+         * Starts the genetic algorithm.
+         * @param The background worker, so we can report progress.
+         */
+        public void Start(BackgroundWorker worker, ProblemResult result)
         {
-            throw new NotImplementedException();
+            Population population = new Population(MiniPopulationSize, BitSize, GenotypeLength, true);
+            int steps = 0;
+
+            while (steps < MaxStep)
+            {
+                population = EvolvePopulation(population);
+
+                if (steps % 10 == 0)
+                {
+                    var solution = population.getFittest();
+                    var max = solution.Solution.Max();
+                    var groups = new Dictionary<int, List<int>>();
+                    for (int i = 1; i <= max; i++)
+                    {
+                        groups.Add(i, new List<int>());
+                    }
+
+                    for (int member = 0; member < solution.Solution.Length; member++)
+                    {
+                        groups[solution.Solution[member]].Add(member);
+                    }
+
+                    worker.ReportProgress(steps * 100 / MaxStep, new ProblemResult() { Groups = groups });
+                }
+
+                steps++;
+            }
         }
     }
 }
