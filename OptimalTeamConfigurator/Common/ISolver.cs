@@ -10,5 +10,10 @@ namespace TeamConfigurator.Interfaces
     public interface ISolver
     {
         void Start(BackgroundWorker worker, ProblemResult result);
+
+        Dictionary<int, Dictionary<int, bool>> Relationships
+        {
+            get; set;
+        }
     }
 }

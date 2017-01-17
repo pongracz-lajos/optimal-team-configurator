@@ -44,6 +44,7 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="FitnessCalculator.cs" />
     <Compile Include="GeneticAlgorithm.cs" />
     <Compile Include="Model\CandidateSolution.cs" />
     <Compile Include="Population.cs" />

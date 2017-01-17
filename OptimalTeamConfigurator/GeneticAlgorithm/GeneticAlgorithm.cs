@@ -13,7 +13,7 @@ namespace GeneticAlgorithm
      * 
      * @author Lajos L. Pongracz
      */
-    public class GeneticAlgorithm : ISolver
+    public class GeneticAlgorithm : ISolver, IGeneticAlgorithmDelegate
     {
         #region "Public properties"
 
@@ -43,9 +43,31 @@ namespace GeneticAlgorithm
             get; set;
         }
 
-        public int GenotypeLength
+        public int GroupSize
         {
             get; set;
+        }
+
+        public int GenotypeLength
+        {
+            get
+            {
+                return genotypeLength;
+            }
+
+            set
+            {
+                genotypeLength = value;
+
+                if (GenotypeLength % GroupSize == 0)
+                {
+                    BitSize = GenotypeLength / GroupSize;
+                }
+                else
+                {
+                    BitSize = GenotypeLength / GroupSize + 1;
+                }
+            }
         }
 
         public int BitSize
@@ -63,6 +85,29 @@ namespace GeneticAlgorithm
             get; set;
         }
 
+        public Dictionary<int, Dictionary<int, bool>> Relationships
+        {
+            get
+            {
+                return relationships;
+            }
+            set
+            {
+                relationships = value;
+                fitnessCalculator = new FitnessCalculator(relationships);
+            }
+        }
+
+        #endregion
+
+        #region "Private fields"
+
+        private Dictionary<int, Dictionary<int, bool>> relationships;
+
+        private FitnessCalculator fitnessCalculator;
+
+        private int genotypeLength;
+
         #endregion
 
         public GeneticAlgorithm(GeneticAlgorithmConfiguration configuration)
@@ -70,18 +115,13 @@ namespace GeneticAlgorithm
             Elitism = configuration.Elitism;
             MutationRate = configuration.MutationRate;
             PopulationSize = configuration.PopulationSize;
+            MaxStep = configuration.MaxStep;
+            GroupSize = configuration.GroupSize;
             GenotypeLength = configuration.PeopleNumber;
 
-            if (configuration.PeopleNumber % configuration.GroupSize == 0)
-            {
-                BitSize = configuration.PeopleNumber / configuration.GroupSize;
-            }
-            else
-            {
-                BitSize = configuration.PeopleNumber / configuration.GroupSize + 1;
-            }
-
             MiniPopulationSize = 5;
+
+            configuration.Delegate = this;
         }
 
         /**
@@ -91,7 +131,7 @@ namespace GeneticAlgorithm
          */
         private Population EvolvePopulation(Population population)
         {
-            Population newPopulation = new Population(PopulationSize, BitSize, GenotypeLength);
+            Population newPopulation = new Population(fitnessCalculator, PopulationSize, BitSize, GenotypeLength, GroupSize);
 
             // Elitism.
             int offset = 0;
@@ -104,10 +144,23 @@ namespace GeneticAlgorithm
             // Crossover operation.
             for (int i = offset; i < newPopulation.CandidateSolutions.Length; i++)
             {
-                CandidateSolution parent1 = selection(population);
-                CandidateSolution parent2 = selection(population);
+                CandidateSolution child = null;
 
-                CandidateSolution child = crossover(parent1, parent2);
+                bool reject = true;
+                do
+                {
+                    CandidateSolution parent1 = selection(population);
+                    CandidateSolution parent2 = selection(population);
+
+                    child = crossover(parent1, parent2);
+
+                    if (IsValid(child))
+                    {
+                        reject = false;
+                    }
+                }
+                while (reject);
+                
 
                 newPopulation.CandidateSolutions[i] = child;
             }
@@ -115,7 +168,31 @@ namespace GeneticAlgorithm
             // Mutation.
             for (int i = offset; i < newPopulation.CandidateSolutions.Length; i++)
             {
-                mutate(newPopulation.CandidateSolutions[i]);
+                var solution = new CandidateSolution(newPopulation.CandidateSolutions[i]);
+                var trial = 0;
+                bool reject = true;
+
+                do
+                {
+                    mutate(solution);
+
+                    if (IsValid(solution))
+                    {
+                        reject = false;
+                    }
+                    else
+                    {
+                        solution = new CandidateSolution(newPopulation.CandidateSolutions[i]);
+                    }
+
+                    trial++;
+                }
+                while (reject && trial < 20);
+                
+                if (!reject)
+                {
+                    newPopulation.CandidateSolutions[i] = solution;
+                }
             }
 
             return newPopulation;
@@ -140,7 +217,7 @@ namespace GeneticAlgorithm
                 endPosition = tmp;
             }
 
-            CandidateSolution child = new CandidateSolution(BitSize, GenotypeLength);
+            CandidateSolution child = new CandidateSolution(fitnessCalculator, BitSize, GenotypeLength, GroupSize);
 
             for (int i = 0; i < GenotypeLength; i++)
             {
@@ -184,7 +261,7 @@ namespace GeneticAlgorithm
             Random random = new Random();
             int randomCandidate;
 
-            Population miniPop = new Population(MiniPopulationSize, BitSize, GenotypeLength);
+            Population miniPop = new Population(fitnessCalculator, MiniPopulationSize, BitSize, GenotypeLength, GroupSize);
 
             for (int i = 0; i < MiniPopulationSize; i++)
             {
@@ -202,14 +279,14 @@ namespace GeneticAlgorithm
          */
         public void Start(BackgroundWorker worker, ProblemResult result)
         {
-            Population population = new Population(MiniPopulationSize, BitSize, GenotypeLength, true);
+            Population population = new Population(fitnessCalculator, PopulationSize, BitSize, GenotypeLength, GroupSize, true);
             int steps = 0;
 
             while (steps < MaxStep)
             {
                 population = EvolvePopulation(population);
 
-                if (steps % 10 == 0)
+                if (steps % 50 == 0)
                 {
                     var solution = population.getFittest();
                     var max = solution.Solution.Max();
@@ -224,11 +301,37 @@ namespace GeneticAlgorithm
                         groups[solution.Solution[member]].Add(member);
                     }
 
-                    worker.ReportProgress(steps * 100 / MaxStep, new ProblemResult() { Groups = groups });
+                    worker.ReportProgress(steps * 100 / MaxStep, new ProblemResult() { Groups = groups, Fitness = solution.Fitness });
                 }
 
                 steps++;
             }
+        }
+
+        private bool IsValid(CandidateSolution solution)
+        {
+            var counter = new Dictionary<int, int>();
+            for (int i = 1; i <= BitSize; i++)
+            {
+                counter.Add(i, 0);
+            }
+
+            for (int i = 0; i < solution.Solution.Length; i++)
+            {
+                counter[solution.Solution[i]]++;
+
+                if (counter[solution.Solution[i]] > GroupSize)
+                {
+                    return false;
+                }
+            }
+
+            return true;
+        }
+
+        public void Refresh(GeneticAlgorithmConfiguration geneticAlgorithmConfiguration)
+        {
+            GenotypeLength = geneticAlgorithmConfiguration.PeopleNumber;
         }
     }
 }
