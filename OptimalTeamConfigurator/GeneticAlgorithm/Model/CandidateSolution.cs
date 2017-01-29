@@ -89,24 +89,6 @@ namespace GeneticAlgorithm.Model
         {
             Random random = new Random();
 
-            bool reject = true;
-            do
-            {
-                for (int i = 0; i < solution.Length; i++)
-                {
-                    solution[i] = random.Next(bitSize) + 1;
-                }
-
-                if (IsValid(solution))
-                {
-                    reject = false;
-                }
-            }
-            while (reject);
-        }
-
-        private bool IsValid(int[] solution)
-        {
             var counter = new Dictionary<int, int>();
             for (int i = 1; i <= bitSize; i++)
             {
@@ -115,15 +97,20 @@ namespace GeneticAlgorithm.Model
 
             for (int i = 0; i < solution.Length; i++)
             {
-                counter[solution[i]]++;
-
-                if (counter[solution[i]] > groupSize)
+                var reject = true;
+                do
                 {
-                    return false;
+                    var bit = random.Next(bitSize) + 1;
+                    if (counter[bit] + 1 <= groupSize)
+                    {
+                        solution[i] = bit;
+                        counter[bit] += 1;
+                        reject = false;
+                    }
                 }
-            }
+                while (reject);
 
-            return true;
+            }
         }
     }
 }

@@ -286,7 +286,7 @@ namespace GeneticAlgorithm
             {
                 population = EvolvePopulation(population);
 
-                if (steps % 50 == 0)
+                if (steps % 2 == 0)
                 {
                     var solution = population.getFittest();
                     var max = solution.Solution.Max();
@@ -298,7 +298,7 @@ namespace GeneticAlgorithm
 
                     for (int member = 0; member < solution.Solution.Length; member++)
                     {
-                        groups[solution.Solution[member]].Add(member);
+                        groups[solution.Solution[member]].Add(member + 1);
                     }
 
                     worker.ReportProgress(steps * 100 / MaxStep, new ProblemResult() { Groups = groups, Fitness = solution.Fitness });

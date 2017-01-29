@@ -114,7 +114,7 @@ namespace Desktop
             Refresh();
 
             // Write progress statistics.
-            foreach (var group in result.Groups.Keys)
+            /*foreach (var group in result.Groups.Keys)
             {
                 file.Write(string.Format("{0}: ", group));
 
@@ -125,10 +125,10 @@ namespace Desktop
 
                 file.WriteLine();
             }
-            file.WriteLine();
+            file.WriteLine();*/
             file.WriteLine("Fitness: {0}, at progress {1}%", result.Fitness, e.ProgressPercentage);
-            file.WriteLine("=====================================================================");
-            file.WriteLine();
+            //file.WriteLine("=====================================================================");
+            //file.WriteLine();
         }
 
         private void worker_RunWorkerCompleted(object sender, RunWorkerCompletedEventArgs e)
@@ -165,6 +165,8 @@ namespace Desktop
             var panel = sender as Panel;
             var g = e.Graphics;
 
+            KnownColor[] names = (KnownColor[])Enum.GetValues(typeof(KnownColor));
+
             if (result != null)
             {
                 var rows = GCD(Size.Width, result.Groups.Keys.Count);
@@ -189,14 +191,16 @@ namespace Desktop
                     {
                         if (result.Groups.ContainsKey(group))
                         {
-                            var brush = new SolidBrush(Color.FromArgb(group));
+                            KnownColor randomColorName = names[random.Next(names.Length)];
+                            Color randomColor = Color.FromKnownColor(randomColorName);
+                            var brush = new SolidBrush(randomColor);
 
                             foreach (var member in result.Groups[group])
                             {
                                 int x = (column * region_x) + random.Next(region_x);
                                 int y = (row * region_y) + random.Next(region_y);
                                 g.FillEllipse(brush, new Rectangle(x, y, 4, 4));
-                                g.DrawString(member + "", new Font("Times New Roman", 1), black, x, y);
+                                //g.DrawString(member + "", new Font("Times New Roman", 1), black, x, y);
                             }
                         }
                     }

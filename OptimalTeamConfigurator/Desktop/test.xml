@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <GeneticAlgorithmConfiguration>
     <Elitism>true</Elitism>
-	<MutationRate>0.3</MutationRate>
+	<MutationRate>0.9</MutationRate>
 	<PopulationSize>120</PopulationSize>
 	<File>input-IGD-IGD-1000-676803.dat</File>
 	<GroupSize>24</GroupSize>
