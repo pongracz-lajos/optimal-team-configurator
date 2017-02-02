@@ -131,18 +131,24 @@ namespace GeneticAlgorithm
          */
         private Population EvolvePopulation(Population population)
         {
-            Population newPopulation = new Population(fitnessCalculator, PopulationSize, BitSize, GenotypeLength, GroupSize);
-
-            // Elitism.
-            int offset = 0;
-            if (Elitism)
+            Array.Sort(population.CandidateSolutions, delegate (CandidateSolution x, CandidateSolution y)
             {
-                newPopulation.CandidateSolutions[0] = population.getFittest();
-                offset = 1;
-            }
+                if (x.Fitness > y.Fitness)
+                {
+                    return 1;
+                }
+                else if (x.Fitness < y.Fitness)
+                {
+                    return -1;
+                }
+
+                return 0;
+            });
+
+            Population offsetSpringPopulation = new Population(fitnessCalculator, PopulationSize, BitSize, GenotypeLength, GroupSize);
 
             // Crossover operation.
-            for (int i = offset; i < newPopulation.CandidateSolutions.Length; i++)
+            for (int i = 0; i < offsetSpringPopulation.CandidateSolutions.Length; i++)
             {
                 CandidateSolution child = null;
 
@@ -160,13 +166,57 @@ namespace GeneticAlgorithm
                     }
                 }
                 while (reject);
-                
 
-                newPopulation.CandidateSolutions[i] = child;
+
+                offsetSpringPopulation.CandidateSolutions[i] = child;
+            }
+
+            Array.Sort(offsetSpringPopulation.CandidateSolutions, delegate (CandidateSolution x, CandidateSolution y)
+            {
+                if (x.Fitness > y.Fitness)
+                {
+                    return 1;
+                }
+                else if (x.Fitness < y.Fitness)
+                {
+                    return -1;
+                }
+
+                return 0;
+            });
+
+            Population newPopulation = new Population(fitnessCalculator, PopulationSize, BitSize, GenotypeLength, GroupSize);
+            var parentCount = population.CandidateSolutions.Length * p;
+            var offsetSpringCount = offsetSpringPopulation.CandidateSolutions.Length * (1 - p);
+
+            while (parentCount + offsetSpringCount < PopulationSize)
+            {
+                if (parentCount % 2 == 1)
+                {
+                    parentCount++;
+                }
+                else
+                {
+                    offsetSpringCount++;
+                }
+            }
+
+            int counter = 0;
+            for (int i = 0; i < newPopulation.CandidateSolutions.Length; i++)
+            {
+                if (i < parentCount)
+                {
+                    newPopulation.CandidateSolutions[i] = population.CandidateSolutions[i];
+                }
+                else
+                {
+                    newPopulation.CandidateSolutions[i] = offsetSpringCount.CandidateSolutions[i];
+                    counter++;
+                }
             }
 
             // Mutation.
-            for (int i = offset; i < newPopulation.CandidateSolutions.Length; i++)
+            for (int i = 0; i < newPopulation.CandidateSolutions.Length; i++)
             {
                 var solution = new CandidateSolution(newPopulation.CandidateSolutions[i]);
                 var trial = 0;
@@ -188,7 +238,7 @@ namespace GeneticAlgorithm
                     trial++;
                 }
                 while (reject && trial < 20);
-                
+
                 if (!reject)
                 {
                     newPopulation.CandidateSolutions[i] = solution;
