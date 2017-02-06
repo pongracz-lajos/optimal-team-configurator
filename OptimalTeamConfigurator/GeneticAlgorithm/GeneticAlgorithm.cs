@@ -171,6 +171,13 @@ namespace GeneticAlgorithm
                 offsetSpringPopulation.CandidateSolutions[i] = child;
             }
 
+            // Mutation.
+            for (int i = 0; i < offsetSpringPopulation.CandidateSolutions.Length; i++)
+            {
+                mutate(offsetSpringPopulation.CandidateSolutions[i]);
+            }
+
+            // Survivor selection
             Array.Sort(offsetSpringPopulation.CandidateSolutions, delegate (CandidateSolution x, CandidateSolution y)
             {
                 if (x.Fitness > y.Fitness)
@@ -212,36 +219,6 @@ namespace GeneticAlgorithm
                 {
                     newPopulation.CandidateSolutions[i] = offsetSpringCount.CandidateSolutions[i];
                     counter++;
-                }
-            }
-
-            // Mutation.
-            for (int i = 0; i < newPopulation.CandidateSolutions.Length; i++)
-            {
-                var solution = new CandidateSolution(newPopulation.CandidateSolutions[i]);
-                var trial = 0;
-                bool reject = true;
-
-                do
-                {
-                    mutate(solution);
-
-                    if (IsValid(solution))
-                    {
-                        reject = false;
-                    }
-                    else
-                    {
-                        solution = new CandidateSolution(newPopulation.CandidateSolutions[i]);
-                    }
-
-                    trial++;
-                }
-                while (reject && trial < 20);
-
-                if (!reject)
-                {
-                    newPopulation.CandidateSolutions[i] = solution;
                 }
             }
 
@@ -296,7 +273,16 @@ namespace GeneticAlgorithm
             {
                 if (random.NextDouble() < MutationRate)
                 {
-                    candidateSolution.Solution[i] = random.Next(BitSize) + 1;
+                    int j = 0;
+                    do
+                    {
+                        j = random.Next(candidateSolution.Solution.Length);
+                    }
+                    while (i == j);
+
+                    var temp = candidateSolution.Solution[i];
+                    candidateSolution.Solution[i] = candidateSolution.Solution[j];
+                    candidateSolution.Solution[j] = temp;
                 }
             }
         }
