@@ -134,11 +134,11 @@ namespace GeneticAlgorithm
             {
                 if (x.Fitness > y.Fitness)
                 {
-                    return 1;
+                    return -1;
                 }
                 else if (x.Fitness < y.Fitness)
                 {
-                    return -1;
+                    return 1;
                 }
 
                 return 0;
@@ -201,11 +201,11 @@ namespace GeneticAlgorithm
             {
                 if (x.Fitness > y.Fitness)
                 {
-                    return 1;
+                    return -1;
                 }
                 else if (x.Fitness < y.Fitness)
                 {
-                    return -1;
+                    return 1;
                 }
 
                 return 0;
