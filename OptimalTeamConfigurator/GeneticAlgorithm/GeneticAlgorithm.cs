@@ -20,7 +20,7 @@ namespace GeneticAlgorithm
         /**
          * Mutation rate.
          */
-        public double MutationRate
+        public double MutationProbability
         {
             get; set;
         }
@@ -28,12 +28,12 @@ namespace GeneticAlgorithm
         /**
          * Elitism on/off.
          */
-        public bool Elitism
+        public double CrossoverProbability
         {
             get; set;
         }
 
-        public int MiniPopulationSize
+        public double SurvivalProbability
         {
             get; set;
         }
@@ -112,14 +112,13 @@ namespace GeneticAlgorithm
 
         public GeneticAlgorithm(GeneticAlgorithmConfiguration configuration)
         {
-            Elitism = configuration.Elitism;
-            MutationRate = configuration.MutationRate;
+            CrossoverProbability = configuration.CrossoverProbability;
+            SurvivalProbability = configuration.SurvivalProbability;
+            MutationProbability = configuration.MutationProbability;
             PopulationSize = configuration.PopulationSize;
             MaxStep = configuration.MaxStep;
             GroupSize = configuration.GroupSize;
             GenotypeLength = configuration.PeopleNumber;
-
-            MiniPopulationSize = 5;
 
             configuration.Delegate = this;
         }
@@ -145,28 +144,48 @@ namespace GeneticAlgorithm
                 return 0;
             });
 
+            Population matingPool = GenerateMatingPool(population);
             Population offsetSpringPopulation = new Population(fitnessCalculator, PopulationSize, BitSize, GenotypeLength, GroupSize);
 
             // Crossover operation.
+            Random random = new Random();
             for (int i = 0; i < offsetSpringPopulation.CandidateSolutions.Length; i++)
             {
                 CandidateSolution child = null;
+                var probability = random.NextDouble();
 
-                bool reject = true;
-                do
+                if (CrossoverProbability < probability)
                 {
-                    CandidateSolution parent1 = selection(population);
-                    CandidateSolution parent2 = selection(population);
+                    child = matingPool.CandidateSolutions[i];
+                }
+                else
+                {
+                    CandidateSolution parent1 = matingPool.CandidateSolutions[i];
+                    bool reject = true;
+                    int trial = 0;
 
-                    child = crossover(parent1, parent2);
-
-                    if (IsValid(child))
+                    do
                     {
-                        reject = false;
+                        CandidateSolution parent2 = selection(matingPool);
+
+                        child = crossover(parent1, parent2);
+
+                        if (IsValid(child))
+                        {
+                            reject = false;
+                        }
+                        else
+                        {
+                            trial++;
+                        }
+                    }
+                    while (reject && trial < 10);
+
+                    if (trial == 10)
+                    {
+                        child = parent1;
                     }
                 }
-                while (reject);
-
 
                 offsetSpringPopulation.CandidateSolutions[i] = child;
             }
@@ -193,8 +212,8 @@ namespace GeneticAlgorithm
             });
 
             Population newPopulation = new Population(fitnessCalculator, PopulationSize, BitSize, GenotypeLength, GroupSize);
-            var parentCount = population.CandidateSolutions.Length * p;
-            var offsetSpringCount = offsetSpringPopulation.CandidateSolutions.Length * (1 - p);
+            var parentCount = (int)(population.CandidateSolutions.Length * SurvivalProbability);
+            var offsetSpringCount = (int)(offsetSpringPopulation.CandidateSolutions.Length * (1.0d - SurvivalProbability));
 
             while (parentCount + offsetSpringCount < PopulationSize)
             {
@@ -217,7 +236,7 @@ namespace GeneticAlgorithm
                 }
                 else
                 {
-                    newPopulation.CandidateSolutions[i] = offsetSpringCount.CandidateSolutions[i];
+                    newPopulation.CandidateSolutions[i] = offsetSpringPopulation.CandidateSolutions[counter];
                     counter++;
                 }
             }
@@ -268,22 +287,19 @@ namespace GeneticAlgorithm
         private void mutate(CandidateSolution candidateSolution)
         {
             Random random = new Random();
-
-            for (int i = 0; i < candidateSolution.Solution.Length; i++)
+            if (random.NextDouble() < MutationProbability)
             {
-                if (random.NextDouble() < MutationRate)
-                {
-                    int j = 0;
-                    do
-                    {
-                        j = random.Next(candidateSolution.Solution.Length);
-                    }
-                    while (i == j);
+                int i = random.Next(candidateSolution.Solution.Length);
+                int j = random.Next(candidateSolution.Solution.Length);
 
-                    var temp = candidateSolution.Solution[i];
-                    candidateSolution.Solution[i] = candidateSolution.Solution[j];
-                    candidateSolution.Solution[j] = temp;
+                while (i == j)
+                {
+                    j = random.Next(candidateSolution.Solution.Length);
                 }
+
+                var temp = candidateSolution.Solution[i];
+                candidateSolution.Solution[i] = candidateSolution.Solution[j];
+                candidateSolution.Solution[j] = temp;
             }
         }
 
@@ -295,28 +311,66 @@ namespace GeneticAlgorithm
         private CandidateSolution selection(Population population)
         {
             Random random = new Random();
-            int randomCandidate;
 
-            Population miniPop = new Population(fitnessCalculator, MiniPopulationSize, BitSize, GenotypeLength, GroupSize);
+            return population.CandidateSolutions[random.Next(population.CandidateSolutions.Length)];
+        }
 
-            for (int i = 0; i < MiniPopulationSize; i++)
+        private Population GenerateMatingPool(Population population)
+        {
+            var cummulativeProbability = new double[population.CandidateSolutions.Length];
+            var probabilities = new double[population.CandidateSolutions.Length];
+            double sum = 0;
+
+            for (int i = 0; i < population.CandidateSolutions.Length; i++)
             {
-                randomCandidate = random.Next(population.CandidateSolutions.Length);
-                miniPop.CandidateSolutions[i] = population.CandidateSolutions[randomCandidate];
+                sum += population.CandidateSolutions[i].Fitness;
             }
 
-            CandidateSolution fittest = miniPop.getFittest();
-            return fittest;
+            probabilities[0] = population.CandidateSolutions[0].Fitness / sum;
+            cummulativeProbability[0] = probabilities[0];
+            for (int i = 1; i < population.CandidateSolutions.Length; i++)
+            {
+                probabilities[i] = population.CandidateSolutions[i].Fitness / sum;
+                cummulativeProbability[i] = cummulativeProbability[i - 1] + probabilities[i];
+            }
+
+            Random random = new Random();
+            double probability;
+
+            Population matingPop = new Population(fitnessCalculator, PopulationSize, BitSize, GenotypeLength, GroupSize);
+
+            for (int i = 0; i < PopulationSize; i++)
+            {
+                probability = random.NextDouble();
+                int candidate = 0;
+
+                for (int j = 1; j < population.CandidateSolutions.Length; j++)
+                {
+                    if (cummulativeProbability[j - 1] <= probability && cummulativeProbability[j] < probability)
+                    {
+                        candidate = j;
+                        break;
+                    }
+                }
+
+                matingPop.CandidateSolutions[i] = new CandidateSolution(population.CandidateSolutions[candidate]);
+            }
+
+            return matingPop;
         }
 
         /**
          * Starts the genetic algorithm.
          * @param The background worker, so we can report progress.
          */
-        public void Start(BackgroundWorker worker, ProblemResult result)
+        public void Start(BackgroundWorker worker, DoWorkEventArgs args)
         {
             Population population = new Population(fitnessCalculator, PopulationSize, BitSize, GenotypeLength, GroupSize, true);
             int steps = 0;
+
+            CandidateSolution solution;
+            int max;
+            Dictionary<int, List<int>> groups;
 
             while (steps < MaxStep)
             {
@@ -324,9 +378,9 @@ namespace GeneticAlgorithm
 
                 if (steps % 2 == 0)
                 {
-                    var solution = population.getFittest();
-                    var max = solution.Solution.Max();
-                    var groups = new Dictionary<int, List<int>>();
+                    solution = population.getFittest();
+                    max = solution.Solution.Max();
+                    groups = new Dictionary<int, List<int>>();
                     for (int i = 1; i <= max; i++)
                     {
                         groups.Add(i, new List<int>());
@@ -342,6 +396,21 @@ namespace GeneticAlgorithm
 
                 steps++;
             }
+
+            // Finished.
+            solution = population.getFittest();
+            max = solution.Solution.Max();
+            groups = new Dictionary<int, List<int>>();
+            for (int i = 1; i <= max; i++)
+            {
+                groups.Add(i, new List<int>());
+            }
+
+            for (int member = 0; member < solution.Solution.Length; member++)
+            {
+                groups[solution.Solution[member]].Add(member + 1);
+            }
+            args.Result = new ProblemResult() { Groups = groups, Fitness = solution.Fitness };
         }
 
         private bool IsValid(CandidateSolution solution)

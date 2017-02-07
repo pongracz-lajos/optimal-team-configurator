@@ -11,16 +11,16 @@ namespace DataGenerator
         {
             Console.WriteLine("Generating problem input.");
 
-            var distrib1 = "IGD";
-            var distrib2 = "IGD";
+            var distrib1 = "ND";
+            var distrib2 = "ND";
 
             ICollection<Tuple<int, int>> list = new List<Tuple<int, int>>();
             // Number of people.
-            int N = 1000;
+            int N = 48;
             double p = 0.5;
 
-            //var random1 = new Normal(0.0, 0.5);
-            //var random2 = new Normal(0.0, 0.5);
+            var random1 = new Normal(0.0, 0.5);
+            var random2 = new Normal(0.0, 0.5);
 
             //var random1 = new Normal(0.0, 0.5);
             //var random2 = new InverseGamma(3.0, 1.0);
@@ -46,8 +46,8 @@ namespace DataGenerator
             //var random1 = new InverseGamma(3.0, 1.0);
             //var random2 = new LogNormal(0.5, 0.0);
 
-            var random1 = new InverseGamma(3.0, 1.0);
-            var random2 = new InverseGamma(3.0, 1.0);
+            //var random1 = new InverseGamma(3.0, 1.0);
+            //var random2 = new InverseGamma(3.0, 1.0);
 
             for (int i = 1; i <= N; i++)
             {

@@ -104,7 +104,7 @@ namespace Desktop
             BackgroundWorker worker = sender as BackgroundWorker;
             ProblemResult result = e.Argument as ProblemResult;
 
-            solver.Start(worker, result);
+            solver.Start(worker, e);
         }
 
         private void worker_ProgressChanged(object sender, ProgressChangedEventArgs e)
@@ -134,7 +134,7 @@ namespace Desktop
         private void worker_RunWorkerCompleted(object sender, RunWorkerCompletedEventArgs e)
         {
             // Get result and redraw the solution.
-            result = e.UserState as ProblemResult;
+            result = e.Result as ProblemResult;
             Refresh();
 
             // Write statistics and results.

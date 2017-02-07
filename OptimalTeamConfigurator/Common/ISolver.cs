@@ -9,7 +9,7 @@ namespace TeamConfigurator.Interfaces
 {
     public interface ISolver
     {
-        void Start(BackgroundWorker worker, ProblemResult result);
+        void Start(BackgroundWorker worker, DoWorkEventArgs args);
 
         Dictionary<int, Dictionary<int, bool>> Relationships
         {

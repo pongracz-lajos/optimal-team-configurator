@@ -1,9 +1,10 @@
 <?xml version="1.0"?>
 <GeneticAlgorithmConfiguration>
-    <Elitism>true</Elitism>
-	<MutationRate>0.9</MutationRate>
-	<PopulationSize>120</PopulationSize>
-	<File>input-IGD-IGD-1000-676803.dat</File>
-	<GroupSize>24</GroupSize>
+    <CrossoverProbability>0.6</CrossoverProbability>
+	<MutationProbability>0.05</MutationProbability>
+	<SurvivalProbability>0.5</SurvivalProbability>
+	<PopulationSize>200</PopulationSize>
+	<File>input-ND-ND-48-1896.dat</File>
+	<GroupSize>6</GroupSize>
 	<MaxStep>1000</MaxStep>
 </GeneticAlgorithmConfiguration>

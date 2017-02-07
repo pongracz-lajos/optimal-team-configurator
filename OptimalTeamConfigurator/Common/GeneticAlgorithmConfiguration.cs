@@ -4,12 +4,17 @@ namespace Common
 {
     public class GeneticAlgorithmConfiguration
     {
-        public bool Elitism
+        public double SurvivalProbability
         {
             get; set;
         }
 
-        public double MutationRate
+        public double MutationProbability
+        {
+            get; set;
+        }
+
+        public double CrossoverProbability
         {
             get; set;
         }
@@ -57,8 +62,8 @@ namespace Common
 
         public GeneticAlgorithmConfiguration()
         {
-            Elitism = true;
-            MutationRate = 0.015d;
+            SurvivalProbability = 0.5;
+            MutationProbability = 0.015d;
             MaxStep = 1000;
             PopulationSize = 100;
             GroupSize = 10;
